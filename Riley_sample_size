@@ -23,14 +23,13 @@ p <- 20
 denominator_d <- (0.9-1)*(log(1-(0.3/0.9)))
 n_i_other <- p/denominator_d #As R2 increases, required sample size decreases
 
-######----Estimating n: My estimate of n for CHADSVASc-G----#####
+######----Estimating n: My estimate of n----#####
 #I first need to estimate R2_adj 
 ##--My methodology to estimate R2_adj--##
-#1. Find previous prediction model for stroke in AF 
+#1. Find previous prediction model
 #2. Extract R2 from this model (this will be R2_adj), or extract R2 from a validation cohort of this model (this will be R2_app) if not presented extract C-statistic
 
-##Doing it: Using PMID: 26493655 (van den Ham 2015 et al)
-#This study only presents C-statistic. Thus, I will calculate R2_adj from C-statistic as outlined by Riley et al 
+#If study only presents C-statistic. Calculate R2_adj from C-statistic as outlined by Riley et al 
 #ISSUE (12/14/18): NEED TO DOUBLE CHECK THIS - very low R2_adj estimated. 
 
 #Step 1: Estimate D using: D = 5.50(C - 0.5) + 10.26(C - 0.5)^3
