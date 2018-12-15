@@ -1,0 +1,80 @@
+###------------------------------------------------------------------------###
+##--------------------Sample size calculation for diagnostic/prognostic models ---------------------##
+###------------------------------------------------------------------------###
+
+Original paper: https://onlinelibrary.wiley.com/doi/full/10.1002/sim.7992
+
+
+######----Estimating n: Formula and example----#####
+##--Formula1--##
+# n = p / (Svh - 1) * Log(1 - (R2_adj/Svh) 
+#Where: 
+#p = number of predictors
+#Svh = "heuristic" shrinkage factor of Van Houwelingen. Riley et al advise this to be 0.9 
+#R2_adj = Adjusted Cox-Snell R2 (Pre-specified a priori, *R2_app is the R2 from the actual model)
+
+##--Example from paper--##
+p <- 20 
+denominator <- (0.9-1)*(log(1-(0.1/0.9)))
+n_i <- p/denominator #1698 participants required
+
+##--Example with higher R2_adj (0.3)--##
+p <- 20 
+denominator_d <- (0.9-1)*(log(1-(0.3/0.9)))
+n_i_other <- p/denominator_d #As R2 increases, required sample size decreases
+
+######----Estimating n: My estimate of n for CHADSVASc-G----#####
+#I first need to estimate R2_adj 
+##--My methodology to estimate R2_adj--##
+#1. Find previous prediction model for stroke in AF 
+#2. Extract R2 from this model (this will be R2_adj), or extract R2 from a validation cohort of this model (this will be R2_app) if not presented extract C-statistic
+
+##Doing it: Using PMID: 26493655 (van den Ham 2015 et al)
+#This study only presents C-statistic. Thus, I will calculate R2_adj from C-statistic as outlined by Riley et al 
+#ISSUE (12/14/18): NEED TO DOUBLE CHECK THIS - very low R2_adj estimated. 
+
+#Step 1: Estimate D using: D = 5.50(C - 0.5) + 10.26(C - 0.5)^3
+D <- 5.50*(0.68 - 0.5) + 10.26*(0.68 - 0.5)^3
+
+#Step 2: Use D to estimate R2d_app (from table in paper): 0.208 R2d_app is a proxy for R2Royston_app
+R2d_app <- 0.208
+R2Royston_app <- R2d_app
+
+#Step 3: Calculate R2_OQuigley_app from R2d_app using: (-((pi)^2/6)*R2Royston_app) / (1 - ((pi)^2/6)) * R2Royston_app - 1
+R2_OQuigley_app_numerator <- (-((pi)^2/6)*R2Royston_app) 
+R2_OQuigley_app_denominator <- (1 - ((pi)^2/6)) * R2Royston_app - 1
+R2_OQuigley_app <- R2_OQuigley_app_numerator / R2_OQuigley_app_denominator # same as (-((pi)^2/6)*R2Royston_app) / ((1 - ((pi)^2/6)) * R2Royston_app - 1)
+
+#Step 4 Caclulate LR from R2_OQuigley_app using (*note E = events): LR = -E * log(1 - R2_OQuigley_app)
+E <- 3751 #Extracted from paper
+LR = -E * log(1 - R2_OQuigley_app) 
+
+#Step 5: Calculate R2_app from LR: R2_app = 1 - exp(-LR/n)
+n_model <- 60594 #Extracted from paper
+R2_app <- 1 - exp(-LR/n_model)
+
+#Step 6 Caclulate R2_adj from R2_app using R2_adj = Svh * R2_app
+Svh <- 0.9
+R2_adj = Svh * R2_app
+
+##--Calculating n from R2_adj--##
+p <- 20 #estimated number of predictors for my model
+my_n <- p / ((Svh - 1) * log(1 - (R2_adj/Svh))) #Estimated n = 8998
+
+
+######----Estimating E and events per predictor parameter (EPP)----#####
+##--Formula2--##
+# E = n*ϕ
+#EPP = nϕ/p
+#Where: ϕ = overall outcome proportion in the target population measured as (i.e. risk of disease/outcome): 
+#overall prevalence of disease/outcome for diagnostic models, or cumulative incidence by time point in prognostic models
+
+##--Example from paper--##
+#Riley et al use ϕ of 0.1
+E <- 1698*0.1 #170 events required
+EPP <- 1698*0.1/20 #8.5 EPP required. 
+
+##--Example from paper2--##
+#Riley et al use ϕ of 0.3
+E_other <- 1698*0.3 #509 required: as prevalence/risk of disease increases, required E increases because, although the chosen value of is fixed at 0.1, the maximum value of is much higher for the setting with the higher outcome proportion.
+EPP_other <- 1698*0.3/20 #26 required 
